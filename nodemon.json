@@ -1,0 +1,13 @@
+{
+    "env" : {
+        "MYSQL_USERS" : "root",
+        "MYSQL_PASSOWORS" : "123456",
+        "MYSQL_DATABASE" : "atividades",
+        "MYSQL_HOST" : "localhost",
+        "ADMIN" : "admin",
+        "PASSOWORD" : " ",
+        "URL" : "http://comagranju.ddns.com.br:2458/rest/GET/PATH/CHAR/",
+        "TOKEN_SECRET" : "segredo"
+
+    }
+}
