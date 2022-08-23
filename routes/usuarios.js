@@ -380,7 +380,6 @@ route.post('/login', async (req, res, next) => {
                                                     DESCRICAO: e['Descricao'],
                                                     OBSERVACAO: e["Observacao"]
                                                 });
-                                                console.log(herois.length)
                                             })
                                             if (user_herois.length == herois.length) {
                                                 return res.status(201).send({
