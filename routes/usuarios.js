@@ -206,14 +206,17 @@ route.post('/visualizacao', async (req, res, next) => {
         );
         paginate.push(data);
         var lista = paginate;
-        // console.log(lista);
         if (index == 1) {
             var lista_2 = new Array();
             lista.forEach((e) => {
                 if (e["SUCESS"] != "no") {
                     lista_2.push(e);
                     mysql.getConnection(async (error, conn) => {
-                        if (error) { return res.status(500).send({ error: error }) }
+                        if (error) {
+                            return res.status(500).send({
+                                error: error
+                            });
+                        }
                         let id = e["ID"];
                         let name = e["Name"];
                         let descricao = e["Descricao"];
@@ -223,11 +226,17 @@ route.post('/visualizacao', async (req, res, next) => {
                                 "INSERT INTO herois (id, Name, Descricao, Observacao) VALUES (?,?,?,?);",
                                 [id, name, descricao, observacao],
                                 (error, results) => {
-                                    if (error) { return res.status(500).send({ error: error }) }
+                                    if (error) {
+                                        return res.status(500).send({
+                                            error: error
+                                        })
+                                    }
                                     const resposta = {
                                         menssagem: "Herois cadastrados com sucesso",
                                     }
-                                    return res.status(201).json({ Resposta: resposta });
+                                    return res.status(201).json({
+                                        Resposta: resposta
+                                    });
                                 }
                             )
                             conn.release()
@@ -245,31 +254,49 @@ route.post('/visualizacao', async (req, res, next) => {
 
 route.post('/cadastro', (req, res, next) => {
     mysql.getConnection((error, conn) => {
-        if (error) { return res.status(500).send({ error: error }) };
+        if (error) {
+            return res.status(500).send({
+                error: error
+            })
+        };
         conn.query(
             'SELECT * FROM users WHERE username = ?',
             [req.body.username],
             (error, results) => {
-                if (error) { return res.status(500).send({ error: error }) };
+                if (error) {
+                    return res.status(500).send({
+                        error: error
+                    })
+                };
                 if (results.length > 0) {
-                    res.status(409).send({ menssagem: 'Email já está cadastrado' })
+                    res.status(409).send({
+                        menssagem: 'Email já está cadastrado'
+                    })
                 }
                 else {
                     bcrypt.hash(req.body.password, 10, (errBcrypt, hash) => {
-                        if (errBcrypt) { return res.status(500).send({ error: errBcrypt }) }
+                        if (errBcrypt) {
+                            return res.status(500).send({ error: errBcrypt })
+                        }
                         conn.query(
                             'INSERT INTO users (username, password) VALUES (?,?);',
                             [req.body.username, hash],
                             (error, result) => {
                                 conn.release();
-                                if (error) { return res.status(500).send({ error: error }) };
+                                if (error) {
+                                    return res.status(500).send({
+                                        error: error
+                                    })
+                                };
                                 const response = {
                                     menssagem: 'Usuario criado com suecesso',
                                     usuarioCriado: {
                                         email: req.body.username
                                     }
                                 }
-                                return res.status(201).send({ response });
+                                return res.status(201).send({
+                                    Resposta: response
+                                });
                             }
                         )
                     });
@@ -279,94 +306,157 @@ route.post('/cadastro', (req, res, next) => {
     });
 });
 route.post('/login', async (req, res, next) => {
-    console.log(req.body.username, req.body.password);
-    try {
-        if (paginate.length == 0 || paginate < 3) {
-            for (let index = 0; index < herois.length; index++) { //Notacao oN
-                let element = herois[index];
-                let { data } = await axios.get(url + element,
-                    {
-                        headers: {
-                            'Authorization': `Basic ${credentialsEncondent}`
-                        }
-                    }
-                );
-
-                // let objeto = JSON.parse(data)
-                console.log(data);
-                paginate.length;
-                if (paginate.length === 0) {
-                    const paginate = new Array();
-                }
-                paginate.push(data);
-            };
-        }
-        // res.status(200).json({ response: paginate })
-    } catch (error) {
-        console.log(error);
-    }
+    let user_herois = [];
+    let herois = new Array();
     mysql.getConnection((error, conn) => {
-        if (error) { return res.status(500).send({ error: error }) };
-        const query = 'SELECT * FROM users WHERE username = ?';
-        conn.query(query, [req.body.username], (error, results, fields) => {
-            conn.release();
-            console.log(req.body.username);
-            if (error) { return res.status(500).send({ error: error }) };
-            if (results.length < 1) {
-                return res.status(401).send({ menssagem: 'Falha na altenticação 1' });
-            };
-            bcrypt.compare(req.body.password, results[0].password, (err, result) => {
-                if (err) {
-                    return res.status(401).send({ menssagem: 'Falha na altenticação 2' });
+        if (error) {
+            return res.status(500).send({
+                error: error
+            });
+        };
+        conn.query(
+            'SELECT * FROM users WHERE username = ?;',
+            [req.body.username],
+            (error, results, fields) => {
+                conn.release();
+                if (error) {
+                    return res.status(500).send({
+                        error: error
+                    });
                 };
-                if (results[0].username == "felipefraga.assis@gmail.com") {
-                    if (result) {
-                        const token = jwt.sign({
-                            id_usuario: results[0].id_usuario,
-                            email: results[0].username
-                        },
-                            process.env.TOKEN_SECRET,
-                            {
-                                expiresIn: "1h"
-                            }
-                        );
-                        return res.status(200).send({
-                            menssagem: 'Authenticado com sucesso',
-                            response: paginate[2],
-                            token: token
+                if (results.length < 1) {
+                    return res.status(401).send({
+                        menssagem: 'Falha na altenticação 1'
+                    });
+                };
+                bcrypt.compare(req.body.password, results[0].password, (err, result) => {
+                    if (err) {
+                        return res.status(401).send({
+                            menssagem: 'Falha na altenticação 2'
                         });
                     }
-                }
-                if (results[0].username == "gabrijac58@gmail.com") {
-                    if (result) {
-                        const token = jwt.sign({
-                            id_usuario: results[0].id_usuario,
-                            email: results[0].username
-                        },
-                            'segredo',
-                            {
-                                expiresIn: "1S"
+                    const token = jwt.sign({
+                        id_usuario: results[0].id,
+                        email: results[0].username
+                    },
+                        process.env.TOKEN_KEY,
+                        {
+                            expiresIn: "1h"
+                        }
+                    );
+                    if (result.length = 1) {
+                        if (error) {
+                            return res.status(500).send({
+                                error: error
+                            });
+                        };
+                        let user = [
+                            results[0].username,
+                        ];
+                        conn.query(
+                            "SELECT * FROM users_herois WHERE id_users = ?",
+                            [results[0].id],
+                            (error, results, fields) => {
+                                user_herois = results;
+                                user_herois.forEach((e) => {
+                                    if (error) {
+                                        return res.status(500).send({
+                                            error: error
+                                        });
+                                    };
+                                    conn.query(
+                                        "SELECT * FROM herois WHERE id = ?;",
+                                        [e.id_herois],
+                                        (error, results, fields) => {
+                                            if (error) {
+                                                return res.status(500).send({
+                                                    error: error
+                                                });
+                                            };
+                                            results.forEach((e) => {
+                                                herois.push({
+                                                    ID: e['id'],
+                                                    NAME: e["Name"],
+                                                    DESCRICAO: e['Descricao'],
+                                                    OBSERVACAO: e["Observacao"]
+                                                });
+                                                console.log(herois.length)
+                                            })
+                                            if (user_herois.length == herois.length) {
+                                                return res.status(201).send({
+                                                    menssagem: "logado com sucesso",
+                                                    Usuario: user,
+                                                    Herois: herois,
+                                                    token: token
+                                                });
+                                            }
+                                        }
+                                    );
+                                });
                             }
                         );
-                        return res.sendFile(path.join(__dirname, "../frontend/view.html"));
                     }
-                }
-                return res.status(401).send({ menssagem: 'Falha na altenticação 3' });
-            });
-        });
+                });
+            }
+        );
     })
 })
-route.get('/logando', async (req, res, next) => {
-    return res.sendFile(path.join(__dirname, '../frontend/login.html'));
-});
-route.get('/logout', function (req, res) {
-    req.session.destroy(function (err) {
-        try {
-            req.logOut();
-            res.redirect(config.destroySessionUrl);
-        } catch (error) {
-            console.log(error);
-        }
+
+route.post('/users-heroi', async (req, res, next) => {
+    mysql.getConnection((error, conn) => {
+        if (error) {
+            return res.status(500).send({
+                error: error
+            })
+        };
+        conn.query(
+            "SELECT * FROM users WHERE username = ?;",
+            [req.body.username],
+            (error, results, fields) => {
+                if (error) {
+                    return res.status(500).send({
+                        error: error
+                    })
+                };
+                if (results.length < 1) {
+                    return res.status(401).send({
+                        menssagem: 'Falha na altenticação'
+                    });
+                };
+                if (results.length = 1) {
+                    if (error) {
+                        return res.status(500).send({
+                            error: error
+                        });
+                    };
+                    conn.query(
+                        "INSERT INTO users_herois (id_users, id_herois) VALUES (?, ?);",
+                        [results[0].id, req.body.heroi],
+                        (error, results, fields) => {
+                            if (error) {
+                                return res.status(500).send({
+                                    error: error
+                                });
+                            };
+                            conn.release();
+                            if (results.length < 1) {
+                                return res.status(401).send({
+                                    menssagem: 'Falha na altenticação'
+                                });
+                            };
+                            return res.status(201).send({
+                                Menssagem: "Cadastro com sucesso",
+                                request: {
+                                    tipo: 'POST',
+                                    descricao: "Login dos usuarios",
+                                    url: "localhost:3000/usuarios/login"
+                                }
+                            });
+                        }
+                    );
+                }
+            }
+        )
     });
 });
 
