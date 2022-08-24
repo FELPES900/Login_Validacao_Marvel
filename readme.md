@@ -3,7 +3,9 @@
 3 - salvar no banco os herois
 4 - CRUD dos herois, buscar novos herois, adcionar herois, deletar herois
 5 - aplicar as praticas do que te passei no whatsapp
-    ## Iniciantes
+    ## 
+    === INICIANTES ===
+    
     - Entenda bem a notação assintótica (O(1), O(N), O(lg N), etc )
 
     - Entenda a diferença entre “O de N”, “Theta de N” e “Omega de N”
