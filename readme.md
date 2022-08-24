@@ -19,7 +19,7 @@
     - Aprenda a técnica de janelas deslizantes para resolver problemas de vetores. Se quiser dica por onde começar, busque problemas de palíndromos e suas variações.
 6 - usar o ENV para guardar informacoes secretas
 
-====================================ARRAY DOS HEROIS===================================
+========ARRAY DOS HEROIS=========
 
     "1010354", "1010846", "1017851", "1012717", "1011297", "1011031", "1009150", "1011198", "1011175", "1011136",
     "1011176", "1010870", "1011194", "1011170", "1009240", "1011120", "1010836", "1010755", "1011214", "1009497",
