@@ -37,6 +37,8 @@ exports.CadastroUser = (req, res, next) => {
 };
 
 exports.LoginUser = async (req, res, next) => {
+    let user;
+    let tipo = null;
     let user_herois = [];
     let herois = new Array();
     mysql.getConnection((error, conn) => {
@@ -61,7 +63,7 @@ exports.LoginUser = async (req, res, next) => {
                     );
                     if (result.length = 1) {
                         if (error) { return res.status(500).send({ error: error }); };
-                        let user = results[0].username;
+                        user = results[0].username;
                         conn.query(
                             "SELECT * FROM users_herois WHERE id_users = ?",
                             [results[0].id],
@@ -101,6 +103,19 @@ exports.LoginUser = async (req, res, next) => {
                             }
                         );
                     };
+                    if (user_herois.length == 0) {
+                        return res.status(201).send({
+                            menssagem: "logado com sucesso",
+                            Usuario: user,
+                            Herois: "Voce nao tem nenhum heroi favorito",
+                            request: {
+                                tipo: 'POST',
+                                descricao: "Cadastro de herois no usuario",
+                                url: "localhost:3000/usuarios/users-heroi"
+                            },
+                            token: token
+                        });
+                    }
                 });
             }
         );
@@ -127,7 +142,7 @@ exports.CadastroDeHeroiAoUsuario = async (req, res, next) => {
                             conn.release();
                             if (results.length < 1) { return res.status(401).send({ menssagem: 'Falha na altenticação' }); };
                             return res.status(201).send({
-                                Menssagem: "Cadastro com sucesso",
+                                Menssagem: "O heroi agora esta vinculado a sua conta",
                                 request: {
                                     tipo: 'POST',
                                     descricao: "Login dos usuarios",
