@@ -8,7 +8,6 @@ const credentialsEncondent = Buffer.from(credentials).toString('base64');
 const url = process.env.URL;
 const herois = [
     // esta na pasta REASME.MD todos os IDS que fora cadastrados no banco de dados
-    "1017840"
 ];
 
 // const sleep = (miliseconds) => { return new Promise(resolve => setTimeout(resolve, miliseconds)) }
