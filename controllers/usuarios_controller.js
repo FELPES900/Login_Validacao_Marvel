@@ -76,10 +76,10 @@ exports.LoginUser = async (req, res, next) => {
                                                     return res.status(200).json({
                                                         User: userName,
                                                         Resposta: {
-                                                            Menssagem : "Herois lincado ao seu usuario",
+                                                            Menssagem: "Herois lincado ao seu usuario",
                                                             lista
                                                         },
-                                                        token : token
+                                                        token: token
                                                     })
                                                 }
                                             }
@@ -132,33 +132,18 @@ exports.CadastroDeHeroiAoUsuario = async (req, res, next) => {
 
 exports.DeleteHeroisRelacionadosAoUsuario = async (req, res, next) => {
     mysql.getConnection((error, conn) => {
-        conn.release();
-        if (error) { return res.status(500).send({ error: error }) };
         conn.query(
-            "SELECT * FROM users WHERE username",
-            [req.body.username],
-            (error, results, fields) => {
-                if (error) { return res.status(500).send({ error: error }) };
-                if (results.length < 1) { return res.status(401).send({ menssagem: 'Falha na altenticação' }); };
-                if (results.length = 1) {
-                    if (error) { return res.status(500).send({ error: error }); };
-                    conn.query(
-                        "DELETE FROM users_herois WHERE id_herois = ?",
-                        [req.dody.heroi],
-                        (error, results, fields) => {
-                            if (error) { return res.status(500).send({ error: error }); };
-                            if (results.length < 1) { return res.status(401).send({ menssagem: 'Falha na altenticação' }); };
-                            return res.status(201).send({
-                                Menssagem: "O heroi vinculado a voce foi removido",
-                                request: {
-                                    tipo: 'POST',
-                                    descricao: "Login dos usuarios",
-                                    url: "localhost:3000/usuarios/login"
-                                }
-                            });
-                        }
-                    )
-                };
+            "SELECT * FROM users WHERE username = ?;",
+            [req.body.email],
+            (error) => {
+                conn.release();
+                conn.query(
+                    "DELETE FROM users_herois WHERE id_herois = ?;",
+                    [req.body.heroi],
+                    (error, resultsHerois) => {
+                        return res.status(200).json({ Menssagem: "Heroi foi descvinculado a voce" });
+                    }
+                )
             }
         );
     });
