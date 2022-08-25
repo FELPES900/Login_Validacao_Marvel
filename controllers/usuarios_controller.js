@@ -7,23 +7,23 @@ exports.CadastroUser = (req, res, next) => {
         if (error) { return res.status(500).send({ error: error }); };
         conn.query(
             'SELECT * FROM users WHERE username = ?',
-            [req.body.username],
+            [req.body.email],
             (error, results) => {
                 if (error) { return res.status(500).send({ error: error }); };
                 if (results.length > 0) { return res.status(409).send({ menssagem: 'Email já está cadastrado' }) }
                 else {
-                    bcrypt.hash(req.body.password, 10, (errBcrypt, hash) => {
+                    bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
                         if (error) { return res.status(500).send({ error: error }); };
                         conn.query(
                             'INSERT INTO users (username, password) VALUES (?,?);',
-                            [req.body.username, hash],
+                            [req.body.email, hash],
                             (error, result) => {
                                 conn.release();
                                 if (error) { return res.status(500).send({ error: error }); };
                                 const response = {
                                     menssagem: 'Usuario criado com suecesso',
                                     usuarioCriado: {
-                                        email: req.body.username
+                                        email: req.body.email
                                     }
                                 }
                                 return res.status(201).send({ Resposta: response });
@@ -37,89 +37,62 @@ exports.CadastroUser = (req, res, next) => {
 };
 
 exports.LoginUser = async (req, res, next) => {
-    let user;
-    let tipo = null;
-    let user_herois = [];
-    let herois = new Array();
+    var userName;
+    var userId;
+    let lista = [];
+    let listaid = [];
     mysql.getConnection((error, conn) => {
-        if (error) { return res.status(500).send({ error: error }); };
+        // Bloco responsavel para fazer altenticação
         conn.query(
             'SELECT * FROM users WHERE username = ?;',
-            [req.body.username],
-            (error, results, fields) => {
+            [req.body.email],
+            (error, results) => {
                 conn.release();
-                if (error) { return res.status(500).send({ error: error }); };
-                if (error) { return res.status(401).send({ menssagem: 'Falha na altenticação 2' }); }
+                if (results == false) { return res.status(400).json({ Resposta: "esse email nao esta cadastrado" }) }
+                userName = results[0].username;
+                userId = results[0].id;
                 bcrypt.compare(req.body.password, results[0].password, (err, result) => {
-                    if (err) { return res.status(401).send({ menssagem: 'Falha na altenticação 2' }); }
-                    const token = jwt.sign({
-                        id_usuario: results[0].id,
-                        email: results[0].username
-                    },
-                        process.env.TOKEN_KEY,
-                        {
-                            expiresIn: "1h"
+                    const token = jwt.sign({ id_usuario: results[0].id, email: results[0].username }, process.env.TOKEN_KEY, { expiresIn: "1h" });
+                    conn.query(
+                        "SELECT * FROM users_herois WHERE id_users = ?",
+                        [userId],
+                        (error, results) => {
+                            if (results == false) { return res.status(200).json({ Resposta: [] }) }
+                            results.forEach(herois => {
+                                listaid.push(herois['id_herois']);
+                                if (listaid.length == results.length) {
+                                    listaid.forEach(element => {
+                                        conn.query(
+                                            "SELECT * FROM herois WHERE id = ?;",
+                                            [element],
+                                            (error, resultsHerois) => {
+                                                lista.push({
+                                                    "ID": resultsHerois[0].id,
+                                                    "Name": resultsHerois[0].Name,
+                                                    "Descricao": resultsHerois[0].Descricao,
+                                                    "Obsercacao": resultsHerois[0].Observacao
+                                                });
+                                                if (lista.length == listaid.length) {
+                                                    return res.status(200).json({
+                                                        User: userName,
+                                                        Resposta: {
+                                                            Menssagem : "Herois lincado ao seu usuario",
+                                                            lista
+                                                        },
+                                                        token : token
+                                                    })
+                                                }
+                                            }
+                                        )
+                                    });
+                                }
+                            });
                         }
-                    );
-                    if (result.length = 1) {
-                        if (error) { return res.status(500).send({ error: error }); };
-                        user = results[0].username;
-                        conn.query(
-                            "SELECT * FROM users_herois WHERE id_users = ?",
-                            [results[0].id],
-                            (error, results, fields) => {
-                                user_herois = results;
-                                user_herois.forEach((e) => {
-                                    if (error) { return res.status(500).send({ error: error }); };
-                                    conn.query(
-                                        "SELECT * FROM herois WHERE id = ?;",
-                                        [e.id_herois],
-                                        (error, results, fields) => {
-                                            if (error) { return res.status(500).send({ error: error }); };
-                                            results.forEach((e) => {
-                                                herois.push({
-                                                    ID: e['id'],
-                                                    NAME: e["Name"],
-                                                    DESCRICAO: e['Descricao'],
-                                                    OBSERVACAO: e["Observacao"]
-                                                });
-                                            })
-                                            if (user_herois.length == herois.length) {
-                                                return res.status(201).send({
-                                                    menssagem: "logado com sucesso",
-                                                    Usuario: user,
-                                                    Herois: herois,
-                                                    request: {
-                                                        tipo: 'POST',
-                                                        descricao: "Cadastro de herois no usuario",
-                                                        url: "localhost:3000/usuarios/users-heroi"
-                                                    },
-                                                    token: token
-                                                });
-                                            };
-                                        }
-                                    );
-                                });
-                            }
-                        );
-                    };
-                    if (user_herois.length == 0) {
-                        return res.status(201).send({
-                            menssagem: "logado com sucesso",
-                            Usuario: user,
-                            Herois: "Voce nao tem nenhum heroi favorito",
-                            request: {
-                                tipo: 'POST',
-                                descricao: "Cadastro de herois no usuario",
-                                url: "localhost:3000/usuarios/users-heroi"
-                            },
-                            token: token
-                        });
-                    }
-                });
+                    )
+                })
             }
         );
-    });
+    })
 };
 
 exports.CadastroDeHeroiAoUsuario = async (req, res, next) => {
@@ -127,7 +100,7 @@ exports.CadastroDeHeroiAoUsuario = async (req, res, next) => {
         if (error) { return res.status(500).send({ error: error }) };
         conn.query(
             "SELECT * FROM users WHERE username = ?;",
-            [req.body.username],
+            [req.body.email],
             (error, results, fields) => {
                 if (error) { return res.status(500).send({ error: error }) };
                 if (results.length < 1) { return res.status(401).send({ menssagem: 'Falha na altenticação' }); };
@@ -151,6 +124,40 @@ exports.CadastroDeHeroiAoUsuario = async (req, res, next) => {
                             });
                         }
                     );
+                };
+            }
+        );
+    });
+};
+
+exports.DeleteHeroisRelacionadosAoUsuario = async (req, res, next) => {
+    mysql.getConnection((error, conn) => {
+        conn.release();
+        if (error) { return res.status(500).send({ error: error }) };
+        conn.query(
+            "SELECT * FROM users WHERE username",
+            [req.body.username],
+            (error, results, fields) => {
+                if (error) { return res.status(500).send({ error: error }) };
+                if (results.length < 1) { return res.status(401).send({ menssagem: 'Falha na altenticação' }); };
+                if (results.length = 1) {
+                    if (error) { return res.status(500).send({ error: error }); };
+                    conn.query(
+                        "DELETE FROM users_herois WHERE id_herois = ?",
+                        [req.dody.heroi],
+                        (error, results, fields) => {
+                            if (error) { return res.status(500).send({ error: error }); };
+                            if (results.length < 1) { return res.status(401).send({ menssagem: 'Falha na altenticação' }); };
+                            return res.status(201).send({
+                                Menssagem: "O heroi vinculado a voce foi removido",
+                                request: {
+                                    tipo: 'POST',
+                                    descricao: "Login dos usuarios",
+                                    url: "localhost:3000/usuarios/login"
+                                }
+                            });
+                        }
+                    )
                 };
             }
         );
