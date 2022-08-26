@@ -1,6 +1,4 @@
 const mysql = require('../mysql').connection;
-const bcrypt = require('bcrypt'); // com isso nossas senhar de ususarios serao cripitografasdas
-const jwt = require('jsonwebtoken');   // aqui vamos criar um token por quanto tempo os daods podem ficar salvo no cache
 
 exports.DeleteHeroisRelacionadosAoUsuario = async (req, res, next) => {
     mysql.getConnection((error, conn) => {
