@@ -1,7 +1,7 @@
 const mysql = require('../mysql').connection;
 
-exports.DeleteHeroisRelacionadosAoUsuario = async (req, res, next) => {
-    mysql.getConnection((error, conn) => {
+exports.DeleteHeroisRelacionadosAoUsuario = async (req, res) => {
+    mysql.getConnection((conn) => {
         conn.query(
             "SELECT * FROM users WHERE username = ?;",
             [req.body.email],

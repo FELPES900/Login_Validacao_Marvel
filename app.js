@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 
-const rotaUsuario = require('./routes/usuarios');
+const rotaUsuario = require('./routes/routes');
 
 app.use(bodyParser.urlencoded({ extended: false })); // aceita apenas dados simples
 app.use(bodyParser.json()); // json de netrada no body
